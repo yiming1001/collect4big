@@ -310,13 +310,27 @@ class DataMigration {
       // 获取表实例
       const table = await this.base.getTableById(tableId);
 
-      // 添加字段（跳过默认的第一列）
-      for (const field of exportFields) {
+      // 获取默认字段列表（飞书会自动创建一个默认文本字段，无法删除）
+      const fieldList = await table.getFieldList();
+      const defaultField = fieldList && fieldList.length > 0 ? fieldList[0] : null;
+
+      // 添加自定义字段（跳过第一个，用默认字段改名代替）
+      for (let i = 0; i < exportFields.length; i++) {
+        const field = exportFields[i];
         const fieldType = this.mapFieldType(field.type);
-        await table.addField({
-          name: field.label,
-          type: fieldType
-        });
+        
+        if (i === 0 && defaultField) {
+          // 第一个字段：将默认字段改名（类型保持文本）
+          await table.setField(defaultField.id, {
+            name: field.label
+          });
+        } else {
+          // 其他字段：新增
+          await table.addField({
+            name: field.label,
+            type: fieldType
+          });
+        }
       }
 
       return { success: true, tableId };

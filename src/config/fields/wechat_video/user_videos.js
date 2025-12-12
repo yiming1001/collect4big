@@ -62,7 +62,7 @@ export default {
     { 
       key: 'createtime', 
       label: '发布时间', 
-      type: 'text', 
+      type: 'datetime', 
       source: 'createtime',
       transform: 'timestamp'  // 时间戳转日期时间
     },

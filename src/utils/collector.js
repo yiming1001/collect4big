@@ -54,7 +54,8 @@ export async function collect(config, inputParams, settings, token, callbacks = 
   const { onProgress, onPageData } = callbacks
   
   let allData = []
-  let cursorValue = ''  // 分页游标值
+  let cursorValue = ''  // 分页游标值（游标分页用）
+  let pageNumber = api.pagination?.startPage || 1  // 页码（页码分页用）
   let prevCursorValue = ''  // 上一次的游标值（用于兜底检测）
   let sameCursorCount = 0  // 连续相同游标计数
   let currentTimes = 0
@@ -63,9 +64,15 @@ export async function collect(config, inputParams, settings, token, callbacks = 
     // 构建请求参数
     const requestParams = { ...inputParams }
     
-    // 添加分页参数（始终添加，第一次为空字符串）
+    // 添加分页参数
     if (api.pagination) {
-      requestParams[api.pagination.paramName] = cursorValue || ''
+      if (api.pagination.type === 'page') {
+        // 页码分页：page=1, 2, 3...
+        requestParams[api.pagination.paramName] = pageNumber
+      } else {
+        // 游标分页：始终添加，第一次为空字符串
+        requestParams[api.pagination.paramName] = cursorValue || ''
+      }
     }
     
     // 发起请求
@@ -92,6 +99,26 @@ export async function collect(config, inputParams, settings, token, callbacks = 
     if (onPageData) onPageData(items)
     
     // 判断是否继续
+    // 页码分页模式
+    if (api.pagination?.type === 'page') {
+      // 页码分页：本页数据为空则结束
+      if (items.length === 0) {
+        console.log('采集完成：本页无数据')
+        break
+      }
+      
+      // 达到次数限制
+      if (settings.mode === 'times' && currentTimes >= settings.times) {
+        console.log('采集完成：达到次数限制', currentTimes)
+        break
+      }
+      
+      // 递增页码
+      pageNumber++
+      continue
+    }
+    
+    // 游标分页模式
     // 1. 获取下一页游标
     const newCursorValue = api.pagination 
       ? (getNestedValue(response, api.pagination.responsePath) || '')

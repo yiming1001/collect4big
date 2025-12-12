@@ -28,3 +28,35 @@ coverage
 *.njsproj
 *.sln
 *.sw?
+
+# README 文件
+README.md
+README*.md
+readme.md
+readme*.md
+*.README.md
+
+# 文档和说明文件
+CHANGELOG.md
+CHANGELOG*.md
+LICENSE
+LICENSE.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+SECURITY.md
+
+# 临时文件和缓存
+*.tmp
+*.temp
+*.cache
+.cache
+.temp
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 测试相关
+*.test.js
+*.spec.js
+__tests__
+__mocks__
