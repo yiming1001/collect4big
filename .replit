@@ -1,10 +1,7 @@
-run = "vite"
+run = "npm run dev"
 entrypoint = "src/App.vue"
 
 hidden = [".config", "tsconfig.json", "tsconfig.node.json", "vite.config.js", ".gitignore"]
-
-[nix]
-channel = "stable-21_11"
 
 [env]
 PATH = "/home/runner/$REPL_SLUG/.config/npm/node_global/bin:/home/runner/$REPL_SLUG/node_modules/.bin"
