@@ -5,15 +5,13 @@ import { useRouter, useRoute } from 'vue-router'
 const router = useRouter()
 const route = useRoute()
 
-// 导航项
 const navItems = [
-  { key: 'home', label: '首页', path: '/' },
-  { key: 'collect', label: '数据采集', path: '/platform' }
+  { key: 'collect', label: '数据采集', path: '/' },
+  { key: 'home', label: '个人中心', path: '/home' }
 ]
 
-// 当前激活的导航
 const activeNav = computed(() => {
-  if (route.path === '/' || route.path === '/home') return 'home'
+  if (route.path === '/home') return 'home'
   return 'collect'
 })
 
