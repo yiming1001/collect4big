@@ -19,7 +19,7 @@ export const platforms = [
   {
     id: 'wechat_video',
     name: '微信视频号',
-    icon: '/icons/wx_video.png',
+    icon: 'icons/wx_video.png',
     description: '微信视频号数据采集',
     enabledFunctions: ['search_user', 'user_videos']
   }

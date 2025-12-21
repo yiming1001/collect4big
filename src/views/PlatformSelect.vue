@@ -71,7 +71,7 @@ const handleConfirm = () => {
             :class="{ selected: selectedPlatform === platform.id }"
             @click="selectPlatform(platform.id)"
           >
-            <img v-if="platform.icon.startsWith('/')" :src="platform.icon" class="option-icon-img" />
+            <img v-if="platform.icon && platform.icon.endsWith('.png')" :src="platform.icon" class="option-icon-img" />
             <span v-else class="option-icon">{{ platform.icon }}</span>
             <div class="option-info">
               <div class="option-name">{{ platform.name }}</div>
@@ -97,7 +97,7 @@ const handleConfirm = () => {
             :class="{ selected: selectedFunction === func.id }"
             @click="selectFunction(func.id)"
           >
-            <img v-if="func.icon.startsWith('/')" :src="func.icon" class="option-icon-img" />
+            <img v-if="func.icon && func.icon.endsWith('.png')" :src="func.icon" class="option-icon-img" />
             <span v-else class="option-icon">{{ func.icon }}</span>
             <div class="option-info">
               <div class="option-name">{{ func.name }}</div>
