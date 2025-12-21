@@ -12,6 +12,9 @@ export default defineConfig({
     host: true
   },
   base: './',
+  build: {
+    outDir: 'docs'
+  },
   plugins: [
     vue(),
     AutoImport({
