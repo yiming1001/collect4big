@@ -4,8 +4,10 @@
 
 import search_user from './search_user.js'
 import user_videos from './user_videos.js'
+import keyword_search from './keyword_search.js'
 
 export default {
   search_user,
-  user_videos
+  user_videos,
+  keyword_search
 }

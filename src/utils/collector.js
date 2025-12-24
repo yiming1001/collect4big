@@ -74,6 +74,21 @@ export async function collect(config, inputParams, settings, token, callbacks = 
         requestParams[api.pagination.paramName] = cursorValue || ''
       }
     }
+
+    // 将需要字符串类型的参数统一转为字符串（按功能配置）
+    if (Array.isArray(api.stringParams) && api.stringParams.length > 0) {
+      for (const key of api.stringParams) {
+        const val = requestParams[key]
+        if (val !== null && val !== undefined) {
+          requestParams[key] = String(val)
+        }
+      }
+    }
+
+    // 自定义参数转换（按功能配置，例如抖音 tags -> List[TagItem]）
+    if (typeof api.transformParams === 'function') {
+      api.transformParams(requestParams)
+    }
     
     // 发起请求
     console.log(`[采集] 第${currentTimes + 1}次请求，参数:`, requestParams)

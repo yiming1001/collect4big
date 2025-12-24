@@ -10,7 +10,8 @@ export const allFunctions = {
   search_video: { id: 'search_video', name: '搜索视频（作品）', icon: '🎬', description: '根据关键词搜索视频（作品）' },
   video_comments: { id: 'video_comments', name: '视频评论（作品）', icon: '💬', description: '采集视频（作品）评论' },
   search_note: { id: 'search_note', name: '搜索笔记', icon: '�', description: '根据关键词搜索笔记' },
-  user_notes: { id: 'user_notes', name: '用户笔记', icon: '�', description: '采集用户发布的笔记' }
+  user_notes: { id: 'user_notes', name: '用户笔记', icon: '�', description: '采集用户发布的笔记' },
+  hot_list: { id: 'hot_list', name: '热榜', icon: '🔥', description: '获取平台热榜/热搜榜数据' }
 }
 
 // ============ 平台配置 ============
@@ -22,16 +23,61 @@ export const platforms = [
     icon: 'icons/wx_video.png',
     description: '微信视频号数据采集',
     enabledFunctions: ['search_user', 'user_videos']
+  },
+  {
+    id: 'xiaohongshu',
+    name: '小红书',
+    icon: '📕',
+    description: '小红书热搜榜数据采集',
+    enabledFunctions: ['hot_list']
+  },
+  {
+    id: 'zhihu',
+    name: '知乎',
+    icon: '❓',
+    description: '知乎热榜数据采集',
+    enabledFunctions: ['hot_list']
+  },
+  {
+    id: 'bilibili',
+    name: 'B站',
+    icon: '📺',
+    description: '哔哩哔哩热门视频数据采集',
+    enabledFunctions: ['hot_list']
+  },
+  {
+    id: 'weibo',
+    name: '微博',
+    icon: '💬',
+    description: '微博热搜榜数据采集',
+    enabledFunctions: ['hot_list']
+  },
+  {
+    id: 'douyin',
+    name: '抖音',
+    icon: '🎵',
+    description: '抖音热榜数据采集',
+    enabledFunctions: ['hot_list']
   }
 ]
 
 // ============ 功能配置（按平台/功能分文件） ============
 // 从各平台配置文件导入
 import wechatVideoConfigs from './fields/wechat_video/index.js'
+import xiaohongshuConfigs from './fields/xiaohongshu/index.js'
+import zhihuConfigs from './fields/zhihu/index.js'
+import bilibiliConfigs from './fields/bilibili/index.js'
+import weiboConfigs from './fields/weibo/index.js'
+import douyinConfigs from './fields/douyin/index.js'
 
 // 平台功能配置映射
 const platformConfigs = {
-  wechat_video: wechatVideoConfigs
+  wechat_video: wechatVideoConfigs,
+  xiaohongshu: xiaohongshuConfigs,
+  zhihu: zhihuConfigs,
+  bilibili: bilibiliConfigs,
+  weibo: weiboConfigs,
+  douyin: douyinConfigs
 }
 
 // ============ 辅助方法 ============

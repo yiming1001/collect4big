@@ -49,13 +49,15 @@ const currentFunction = computed(() => {
 })
 const currentFields = computed(() => getInputFields(platform.value, functionType.value))
 const exportFields = computed(() => getExportFields(platform.value, functionType.value))
+const functionConfig = computed(() => getFunctionConfig(platform.value, functionType.value) || {})
+const showCollectSettings = computed(() => functionConfig.value.showCollectSettings !== false)
 
 onMounted(async () => {
   platform.value = route.query.platform || ''
   functionType.value = route.query.function || ''
   if (!platform.value || !functionType.value) {
     ElMessage.warning('参数错误')
-    router.push('/platform')
+    router.push({ name: 'PlatformSelect' })
     return
   }
   const fields = getInputFields(platform.value, functionType.value)
@@ -98,7 +100,30 @@ const loadTableList = async () => {
   }
 }
 
-const goBack = () => router.push('/platform')
+const setSelectFieldValue = (key, value) => {
+  formData.value[key] = value
+}
+
+const toggleMultiSelectValue = (key, value) => {
+  const current = formData.value[key]
+  if (Array.isArray(current)) {
+    if (current.includes(value)) {
+      formData.value[key] = current.filter(v => v !== value)
+    } else {
+      formData.value[key] = [...current, value]
+    }
+  } else if (current === undefined || current === null || current === '') {
+    formData.value[key] = [value]
+  } else {
+    formData.value[key] = [current, value]
+  }
+}
+
+const clearSelectField = (key, multiple) => {
+  formData.value[key] = multiple ? [] : ''
+}
+
+const goBack = () => router.push({ name: 'PlatformSelect' })
 
 // 监听表选择变化，自动检查字段
 watch(existingTableId, async (newVal) => {
@@ -218,6 +243,23 @@ const startCollect = async () => {
       return
     }
     
+    // 为导出结果追加“选择的话题”字段（根据当前选择的垂类标签）
+    let finalData = collectedData
+    const tagField = currentFields.value.find(f => f.key === 'tags')
+    if (tagField && Array.isArray(formData.value.tags) && formData.value.tags.length > 0) {
+      const labelMap = new Map(
+        (tagField.options || []).map(opt => [String(opt.value), opt.label])
+      )
+      const selectedLabels = formData.value.tags
+        .map(id => labelMap.get(String(id)))
+        .filter(Boolean)
+      const selectedText = selectedLabels.join(',')
+      finalData = collectedData.map(item => ({
+        ...item,
+        selected_tags: selectedText
+      }))
+    }
+    
     // 获取字段映射
     const mapping = getFieldMapping(platform.value, functionType.value)
     
@@ -226,7 +268,7 @@ const startCollect = async () => {
       // 新建数据表并写入数据
       result = await dataMigration.createTableAndMigrate(
         newTableName.value.trim(),
-        collectedData,
+        finalData,
         mapping,
         exportFields.value
       )
@@ -245,7 +287,7 @@ const startCollect = async () => {
         return
       }
       result = await dataMigration.migrate({
-        json_data: collectedData,
+        json_data: finalData,
         mapping,
         table_name: selectedTable.name
       })
@@ -288,36 +330,74 @@ const startCollect = async () => {
         <span class="card-title">📝 采集参数</span>
       </div>
       <div class="card-body">
-        <template v-for="field in currentFields" :key="field.key">
-          <div v-if="field.type === 'input'" class="form-group">
-            <label class="form-label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
-            <input v-model="formData[field.key]" type="text" class="form-input" :placeholder="field.placeholder" />
-          </div>
-          <div v-else-if="field.type === 'number'" class="form-group">
-            <label class="form-label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
-            <input v-model.number="formData[field.key]" type="number" class="form-input" :min="field.min" :max="field.max" />
-          </div>
-          <div v-else-if="field.type === 'switch'" class="form-group switch-group">
-            <div class="switch-row">
-              <label class="form-label">{{ field.label }}</label>
-              <div class="switch" :class="{ active: formData[field.key] }" @click="formData[field.key] = !formData[field.key]">
-                <div class="switch-handle"></div>
-              </div>
+        <template v-if="currentFields && currentFields.length">
+          <template v-for="field in currentFields" :key="field.key">
+            <div v-if="field.type === 'input'" class="form-group">
+              <label class="form-label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
+              <input v-model="formData[field.key]" type="text" class="form-input" :placeholder="field.placeholder" />
             </div>
-            <div v-if="field.description" class="field-desc">{{ field.description }}</div>
-          </div>
-          <div v-else-if="field.type === 'select'" class="form-group">
-            <label class="form-label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
-            <select v-model="formData[field.key]" class="form-select">
-              <option value="">请选择</option>
-              <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
-            </select>
-          </div>
+            <div v-else-if="field.type === 'number'" class="form-group">
+              <label class="form-label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
+              <input v-model.number="formData[field.key]" type="number" class="form-input" :min="field.min" :max="field.max" />
+            </div>
+            <div v-else-if="field.type === 'switch'" class="form-group switch-group">
+              <div class="switch-row">
+                <label class="form-label">{{ field.label }}</label>
+                <div class="switch" :class="{ active: formData[field.key] }" @click="formData[field.key] = !formData[field.key]">
+                  <div class="switch-handle"></div>
+                </div>
+              </div>
+              <div v-if="field.description" class="field-desc">{{ field.description }}</div>
+            </div>
+            <div v-else-if="field.type === 'select'" class="form-group">
+              <label class="form-label">{{ field.label }}<span v-if="field.required" class="required">*</span></label>
+              <template v-if="field.options && field.options.length > 6">
+                <div class="tag-grid">
+                  <div
+                    v-for="opt in field.options"
+                    :key="opt.value"
+                    class="tag-option"
+                    :class="{
+                      active: field.multiple
+                        ? Array.isArray(formData[field.key]) && formData[field.key].includes(opt.value)
+                        : formData[field.key] === opt.value
+                    }"
+                    @click="field.multiple ? toggleMultiSelectValue(field.key, opt.value) : setSelectFieldValue(field.key, opt.value)"
+                  >
+                    <span
+                      v-if="field.multiple
+                        ? Array.isArray(formData[field.key]) && formData[field.key].includes(opt.value)
+                        : formData[field.key] === opt.value"
+                      class="tag-check"
+                    >✓</span>
+                    <span class="tag-label">{{ opt.label }}</span>
+                  </div>
+                  <div
+                    v-if="field.multiple && Array.isArray(formData[field.key]) && formData[field.key].length"
+                    class="tag-clear"
+                    @click="clearSelectField(field.key, true)"
+                  >
+                    <span class="tag-clear-icon">x</span>
+                    <span class="tag-clear-label">清空选择</span>
+                  </div>
+                </div>
+              </template>
+              <template v-else>
+                <select v-model="formData[field.key]" class="form-select">
+                  <option value="">请选择</option>
+                  <option v-for="opt in field.options" :key="opt.value" :value="opt.value">{{ opt.label }}</option>
+                </select>
+              </template>
+            </div>
+          </template>
         </template>
+        <div v-else class="empty-hint">
+          当前功能无需额外采集参数
+        </div>
       </div>
     </div>
 
-    <div class="card">
+    <div v-if="showCollectSettings" class="card">
       <div class="card-header">
         <span class="card-title">⚙️ 采集设置</span>
       </div>
@@ -425,6 +505,7 @@ const startCollect = async () => {
 .switch-handle { width: 20px; height: 20px; background: #fff; border-radius: 50%; position: absolute; top: 2px; left: 2px; transition: left 0.2s; box-shadow: 0 1px 3px rgba(0,0,0,0.2); }
 .switch.active .switch-handle { left: 22px; }
 .field-desc { font-size: 12px; color: #909399; margin-top: 6px; }
+.empty-hint { font-size: 13px; color: #909399; }
 .mode-selector { display: flex; gap: 20px; margin-bottom: 16px; }
 .mode-item { display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 14px; color: #606266; }
 .mode-radio { width: 16px; height: 16px; border: 2px solid #dcdfe6; border-radius: 50%; position: relative; transition: all 0.2s; }
@@ -447,4 +528,14 @@ const startCollect = async () => {
 .check-header { margin-bottom: 8px; }
 .missing-fields { display: flex; flex-wrap: wrap; gap: 6px; }
 .missing-tag { background: #fde2e2; color: #f56c6c; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+.tag-grid { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-option { padding: 8px 12px; border-radius: 20px; font-size: 14px; cursor: pointer; border: 1px solid #dcdfe6; color: #606266; background: #f5f7fa; display: inline-flex; align-items: center; gap: 6px; }
+.tag-option.active { border-color: #409eff; background: #409eff; color: #fff; font-weight: 600; box-shadow: 0 0 0 1px rgba(64,158,255,0.3); }
+.tag-option:hover { border-color: #c6e2ff; }
+.tag-check { font-size: 14px; }
+.tag-label { line-height: 1; }
+.tag-clear { padding: 8px 12px; border-radius: 20px; font-size: 14px; cursor: pointer; border: 1px solid #f56c6c; color: #f56c6c; background: #fff; display: inline-flex; align-items: center; gap: 6px; }
+.tag-clear:hover { background: #fef0f0; }
+.tag-clear-icon { font-size: 14px; line-height: 1; }
+.tag-clear-label { line-height: 1; }
 </style>
