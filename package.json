@@ -4,7 +4,7 @@
   "output": "dist",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && if exist dist rmdir /S /Q dist && xcopy docs dist /E /I /Y",
     "preview": "vite preview --port 4173"
   },
   "dependencies": {
